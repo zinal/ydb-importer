@@ -1,6 +1,6 @@
 package ydb.importer.target;
 
-import com.yandex.ydb.table.values.StructType;
+import tech.ydb.table.values.StructType;
 import ydb.importer.TableDecision;
 import static ydb.importer.config.JdomHelper.isBlank;
 

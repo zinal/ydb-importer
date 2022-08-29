@@ -4,7 +4,7 @@ import java.io.BufferedWriter;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.text.StringSubstitutor;
-import com.yandex.ydb.table.values.*;
+import tech.ydb.table.values.*;
 import ydb.importer.source.ColumnInfo;
 import ydb.importer.TableDecision;
 
@@ -110,27 +110,27 @@ public class YdbTableBuilder {
     private Type convertType(ColumnInfo ci) {
         switch (ci.getSqlType()) {
             case java.sql.Types.SMALLINT:
-                return PrimitiveType.int16();
+                return PrimitiveType.Int16;
             case java.sql.Types.BOOLEAN:
-                return PrimitiveType.bool();
+                return PrimitiveType.Bool;
             case java.sql.Types.INTEGER:
-                return PrimitiveType.int32();
+                return PrimitiveType.Int32;
             case java.sql.Types.BIGINT:
-                return PrimitiveType.int64();
+                return PrimitiveType.Int64;
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
                 if (ci.getSqlScale() < 0)
-                    return PrimitiveType.float64();
+                    return PrimitiveType.Double;
                 if (ci.getSqlScale() == 0) {
                     if (ci.getSqlPrecision() == 0)
-                        return PrimitiveType.float64();
+                        return PrimitiveType.Double;
                     if (ci.getSqlPrecision() < 10)
-                        return PrimitiveType.int32();
+                        return PrimitiveType.Int32;
                     if (ci.getSqlPrecision() < 20)
-                        return PrimitiveType.int64();
+                        return PrimitiveType.Int64;
                     // TEMP: only DECIMAL(22,9) is supported for table columns.
                     // For now Int64 is the best substitute for DECIMAL(38,0).
-                    return PrimitiveType.int64();
+                    return PrimitiveType.Int64;
                     /*
                     int prec = ci.getSqlPrecision();
                     if (prec > 35) prec = 35;
@@ -154,34 +154,34 @@ public class YdbTableBuilder {
             case java.sql.Types.LONGNVARCHAR:
             case java.sql.Types.LONGVARCHAR:
             case java.sql.Types.CLOB: // MAYBE: store in a separate table, like BLOBS
-                return PrimitiveType.utf8();
+                return PrimitiveType.Text;
             case java.sql.Types.BINARY:
             case java.sql.Types.VARBINARY:
-                return PrimitiveType.string();
+                return PrimitiveType.Bytes;
             case java.sql.Types.BLOB:
             case java.sql.Types.LONGVARBINARY:
             case java.sql.Types.SQLXML:
-                return PrimitiveType.int64(); // Id of record sequence in the separate table.
+                return PrimitiveType.Int64; // Id of record sequence in the separate table.
             case java.sql.Types.DATE:
                 switch (tab.getOptions().getDateConv()) {
                     case DATE:
-                        return PrimitiveType.date();
+                        return PrimitiveType.Date;
                     case INT:
-                        return PrimitiveType.int32();
+                        return PrimitiveType.Int32;
                     case STR:
-                        return PrimitiveType.utf8();
+                        return PrimitiveType.Text;
                 }
-                return PrimitiveType.date();
+                return PrimitiveType.Date;
             case java.sql.Types.TIMESTAMP:
                 if (ci.getSqlScale()==0)
-                    return PrimitiveType.datetime();
-                return PrimitiveType.timestamp();
+                    return PrimitiveType.Datetime;
+                return PrimitiveType.Timestamp;
         }
         throw new IllegalArgumentException("Unsupported type code: " + ci.getSqlType());
     }
 
     private void addSyntheticKey(StringBuilder sb, Map<String, Type> types) {
-        types.put(TargetTable.SYNTH_KEY_FIELD, PrimitiveType.string());
+        types.put(TargetTable.SYNTH_KEY_FIELD, PrimitiveType.Bytes);
         sb.append("  ydb_synth_key String,").append(EOL)
                 .append("  PRIMARY KEY (ydb_synth_key)");
     }

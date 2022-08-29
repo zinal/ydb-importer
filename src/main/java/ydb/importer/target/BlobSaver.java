@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.protobuf.ByteString;
-import com.yandex.ydb.table.values.ListType;
-import com.yandex.ydb.table.values.PrimitiveType;
-import com.yandex.ydb.table.values.PrimitiveValue;
-import com.yandex.ydb.table.values.StructType;
-import com.yandex.ydb.table.values.Value;
+import tech.ydb.table.values.ListType;
+import tech.ydb.table.values.PrimitiveType;
+import tech.ydb.table.values.PrimitiveValue;
+import tech.ydb.table.values.StructType;
+import tech.ydb.table.values.Value;
 
 /**
  * JDBC to YDB BLOB copying logic.
@@ -22,9 +22,9 @@ public class BlobSaver {
     public final static int BLOCK_SIZE = 65536;
 
     public final static StructType BLOB_ROW = StructType.of(
-                        "id", PrimitiveType.int64(),
-                        "pos", PrimitiveType.int32(),
-                        "val", PrimitiveType.string() );
+                        "id", PrimitiveType.Int64,
+                        "pos", PrimitiveType.Int32,
+                        "val", PrimitiveType.Bytes );
     public final static ListType BLOB_LIST = ListType.of(BLOB_ROW);
 
     // Id generator for the current worker thread.
@@ -80,7 +80,7 @@ public class BlobSaver {
 
     public long saveBlob(YdbUpsertOp ydbOp, InputStream is, String blobPath) throws Exception {
         final long id = nextId();
-        final Value<?> idValue = PrimitiveValue.int64(id);
+        final Value<?> idValue = PrimitiveValue.newInt64(id);
         final Datum v = makeDatum(blobPath);
         int position = 0;
         final byte[] block = new byte[BLOCK_SIZE];
@@ -92,8 +92,8 @@ public class BlobSaver {
             // Create and append the block to the values list
             final Value<?> members[] = new Value<?>[3];
             members[posId] = idValue;
-            members[posPos] = PrimitiveValue.int32(position);
-            members[posVal] = PrimitiveValue.string(ByteString.copyFrom(block, 0, bytesRead));
+            members[posPos] = PrimitiveValue.newInt32(position);
+            members[posVal] = PrimitiveValue.newBytes(ByteString.copyFrom(block, 0, bytesRead));
             v.values.add(BLOB_ROW.newValueUnsafe(members));
             ++position;
             // Send the values list to YDB if it's time
@@ -117,7 +117,7 @@ public class BlobSaver {
     public static final class Datum {
         public final String tablePath;
         public final AnyCounter counter;
-        public final List<Value> values;
+        public final List<Value<?>> values;
 
         public Datum(ProgressCounter pc, String tablePath) {
             this.tablePath = tablePath;

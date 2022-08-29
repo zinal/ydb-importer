@@ -4,12 +4,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
-import com.yandex.ydb.core.Issue;
-import com.yandex.ydb.core.Result;
-import com.yandex.ydb.core.Status;
-import com.yandex.ydb.table.Session;
-import com.yandex.ydb.table.SessionRetryContext;
-import com.yandex.ydb.table.description.TableDescription;
+import tech.ydb.core.Issue;
+import tech.ydb.core.Result;
+import tech.ydb.core.Status;
+import tech.ydb.table.Session;
+import tech.ydb.table.SessionRetryContext;
+import tech.ydb.table.description.TableDescription;
 import ydb.importer.target.TargetTable;
 
 /**
@@ -44,7 +44,7 @@ public class CreateTableTask implements Callable<CreateTableTask.Out> {
             if (tableExists) {
                 if (! owner.getConfig().getTarget().isReplaceExisting()) {
                     LOG.info("Table already exists: {}", table.getFullName());
-                    return new Out(table, describeResult.expect("describe issue"));
+                    return new Out(table, describeResult.getValue());
                 }
                 runSchemaOperation(
                         session -> session.dropTable(fullName),
@@ -76,7 +76,7 @@ public class CreateTableTask implements Callable<CreateTableTask.Out> {
                     Thread.sleep(ThreadLocalRandom.current().nextLong(1000L, 5000L));
                 } catch(InterruptedException ix) {}
             } else {
-                status.expect(msg);
+                status.expectSuccess(msg);
             }
         }
     }

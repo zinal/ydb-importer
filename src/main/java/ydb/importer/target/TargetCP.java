@@ -1,10 +1,10 @@
 package ydb.importer.target;
 
-import com.yandex.ydb.auth.iam.CloudAuthHelper;
-import com.yandex.ydb.core.grpc.GrpcTransport;
-import com.yandex.ydb.table.SessionRetryContext;
-import com.yandex.ydb.table.TableClient;
-import com.yandex.ydb.table.rpc.grpc.GrpcTableRpc;
+import tech.ydb.auth.iam.CloudAuthHelper;
+import tech.ydb.core.grpc.GrpcTransport;
+import tech.ydb.core.grpc.GrpcTransportBuilder;
+import tech.ydb.table.SessionRetryContext;
+import tech.ydb.table.TableClient;
 import ydb.importer.config.TargetConfig;
 
 /**
@@ -18,7 +18,7 @@ public class TargetCP implements AutoCloseable {
     private final String database;
 
     public TargetCP(TargetConfig config, int poolSize) {
-        GrpcTransport.Builder builder = GrpcTransport
+       GrpcTransportBuilder builder = GrpcTransport
                 .forConnectionString(config.getConnectionString());
         switch (config.getAuthMode()) {
             case ENV:
@@ -29,8 +29,7 @@ public class TargetCP implements AutoCloseable {
                 break;
         }
         GrpcTransport transport = builder.build();
-        GrpcTableRpc rpc = GrpcTableRpc.ownTransport(transport);
-        this.tableClient = TableClient.newClient(rpc)
+        this.tableClient = TableClient.newClient(transport)
                 .sessionPoolSize(0, poolSize)
                 .build();
         this.database = transport.getDatabase();

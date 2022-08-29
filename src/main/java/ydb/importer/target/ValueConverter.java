@@ -4,14 +4,13 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.time.LocalDate;
-import com.yandex.ydb.table.values.DecimalType;
-import com.yandex.ydb.table.values.PrimitiveType;
-import com.yandex.ydb.table.values.PrimitiveValue;
-import com.yandex.ydb.table.values.StructType;
-import com.yandex.ydb.table.values.Type;
-import com.yandex.ydb.table.values.Value;
-import com.yandex.ydb.table.values.VoidValue;
-import ydb.importer.source.ColumnInfo;
+import tech.ydb.table.values.DecimalType;
+import tech.ydb.table.values.PrimitiveType;
+import tech.ydb.table.values.PrimitiveValue;
+import tech.ydb.table.values.StructType;
+import tech.ydb.table.values.Type;
+import tech.ydb.table.values.Value;
+import tech.ydb.table.values.VoidValue;
 
 /**
  *
@@ -37,7 +36,7 @@ public abstract class ValueConverter {
                 return ConvMode.DECIMAL;
             case PRIMITIVE:
                 try {
-                    switch (((PrimitiveType)paramType).getId()) {
+                    switch (((PrimitiveType)paramType)) {
                         case Bool:
                             switch (sourceType) {
                                 case java.sql.Types.SMALLINT:
@@ -65,9 +64,9 @@ public abstract class ValueConverter {
                             return ConvMode.DATETIME;
                         case Timestamp:
                             return ConvMode.TIMESTAMP;
-                        case Float32:
+                        case Float:
                             return ConvMode.FLOAT;
-                        case Float64:
+                        case Double:
                             return ConvMode.DOUBLE;
                         case Int32:
                             switch (sourceType) {
@@ -97,13 +96,13 @@ public abstract class ValueConverter {
                                     return ConvMode.TS_UINT64;
                             }
                             return ConvMode.UINT64;
-                        case Utf8:
+                        case Text:
                             switch (sourceType) {
                                 case java.sql.Types.DATE:
                                     return ConvMode.DATE_STR;
                             }
-                            return ConvMode.UTF8;
-                        case String: // SQL BINARY, VARBINARY
+                            return ConvMode.TEXT;
+                        case Bytes: // SQL BINARY, VARBINARY
                             return ConvMode.BINARY;
                         default:
                             throw new IllegalArgumentException("unsupported type: " + paramType);
@@ -136,49 +135,49 @@ public abstract class ValueConverter {
                 // Generate id + subrecords
                 return convertBlob(rs, ci);
             case BINARY:
-                return PrimitiveValue.string(rs.getBytes(srcpos));
+                return PrimitiveValue.newBytes(rs.getBytes(srcpos));
             case BOOL:
-                return PrimitiveValue.bool(rs.getBoolean(srcpos));
+                return PrimitiveValue.newBool(rs.getBoolean(srcpos));
             case INT2BOOL:
-                return PrimitiveValue.bool(rs.getInt(srcpos) == 0 ? false : true);
+                return PrimitiveValue.newBool(rs.getInt(srcpos) == 0 ? false : true);
             case STR2BOOL:
-                return PrimitiveValue.bool(str2bool(rs.getString(srcpos)));
+                return PrimitiveValue.newBool(str2bool(rs.getString(srcpos)));
             case DATE:
-                return PrimitiveValue.date(rs.getDate(srcpos).toLocalDate());
+                return PrimitiveValue.newDate(rs.getDate(srcpos).toLocalDate());
             case DATE_INT32:
-                return PrimitiveValue.int32(date2int(rs.getDate(srcpos)));
+                return PrimitiveValue.newInt32(date2int(rs.getDate(srcpos)));
             case DATE_UINT32:
-                return PrimitiveValue.uint32(date2int(rs.getDate(srcpos)));
+                return PrimitiveValue.newUint32(date2int(rs.getDate(srcpos)));
             case DATE_INT64:
-                return PrimitiveValue.int64(date2int(rs.getDate(srcpos)));
+                return PrimitiveValue.newInt64(date2int(rs.getDate(srcpos)));
             case DATE_UINT64:
-                return PrimitiveValue.uint64(date2int(rs.getDate(srcpos)));
+                return PrimitiveValue.newUint64(date2int(rs.getDate(srcpos)));
             case DATE_STR:
-                return PrimitiveValue.utf8(date2str(rs.getDate(srcpos)));
+                return PrimitiveValue.newText(date2str(rs.getDate(srcpos)));
             case DATETIME:
-                return PrimitiveValue.datetime(rs.getTimestamp(srcpos).toInstant());
+                return PrimitiveValue.newDatetime(rs.getTimestamp(srcpos).toInstant());
             case TIMESTAMP:
-                return PrimitiveValue.timestamp(rs.getTimestamp(srcpos).toInstant());
+                return PrimitiveValue.newTimestamp(rs.getTimestamp(srcpos).toInstant());
             case TS_DATE:
-                return PrimitiveValue.date(rs.getTimestamp(srcpos).toLocalDateTime().toLocalDate());
+                return PrimitiveValue.newDate(rs.getTimestamp(srcpos).toLocalDateTime().toLocalDate());
             case TS_INT64:
-                return PrimitiveValue.int64(rs.getTimestamp(srcpos).getTime());
+                return PrimitiveValue.newInt64(rs.getTimestamp(srcpos).getTime());
             case TS_UINT64:
-                return PrimitiveValue.uint64(rs.getTimestamp(srcpos).getTime());
+                return PrimitiveValue.newUint64(rs.getTimestamp(srcpos).getTime());
             case FLOAT:
-                return PrimitiveValue.float32(rs.getFloat(srcpos));
+                return PrimitiveValue.newFloat(rs.getFloat(srcpos));
             case DOUBLE:
-                return PrimitiveValue.float64(rs.getDouble(srcpos));
+                return PrimitiveValue.newDouble(rs.getDouble(srcpos));
             case INT32:
-                return PrimitiveValue.int32(rs.getInt(srcpos));
+                return PrimitiveValue.newInt32(rs.getInt(srcpos));
             case UINT32:
-                return PrimitiveValue.uint32(rs.getInt(srcpos));
+                return PrimitiveValue.newUint32(rs.getInt(srcpos));
             case INT64:
-                return PrimitiveValue.int64(rs.getLong(srcpos));
+                return PrimitiveValue.newInt64(rs.getLong(srcpos));
             case UINT64:
-                return PrimitiveValue.uint64(rs.getLong(srcpos));
-            case UTF8:
-                return PrimitiveValue.utf8(rs.getString(srcpos));
+                return PrimitiveValue.newUint64(rs.getLong(srcpos));
+            case TEXT:
+                return PrimitiveValue.newText(rs.getString(srcpos));
             case DECIMAL:
                 if (DECIMAL_ISSUE1) {
                     // FIX: conversion does not work properly, defect in Java YDB SDK
@@ -236,7 +235,7 @@ public abstract class ValueConverter {
         DATE,
         DATETIME,
         TIMESTAMP,
-        UTF8,
+        TEXT,
 
         DATE_INT32,
         DATE_INT64,

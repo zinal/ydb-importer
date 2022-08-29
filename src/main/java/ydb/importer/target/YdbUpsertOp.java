@@ -1,9 +1,9 @@
 package ydb.importer.target;
 
-import com.yandex.ydb.core.Status;
-import com.yandex.ydb.table.SessionRetryContext;
-import com.yandex.ydb.table.settings.BulkUpsertSettings;
-import com.yandex.ydb.table.values.ListValue;
+import tech.ydb.core.Status;
+import tech.ydb.table.SessionRetryContext;
+import tech.ydb.table.settings.BulkUpsertSettings;
+import tech.ydb.table.values.ListValue;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -33,7 +33,7 @@ public class YdbUpsertOp {
             return 0;
         final int retval = (currentRows > 0) ? currentRows : 0;
         final String m = (counter==null) ? "bulk upsert problem" : counter.getIssueMessage();
-        status.join().expect(m);
+        status.join().expectSuccess(m);
         if (counter != null)
             counter.addValue(retval);
         currentRows = -1;

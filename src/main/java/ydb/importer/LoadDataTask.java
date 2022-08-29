@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import com.yandex.ydb.table.values.*;
+import tech.ydb.table.values.*;
 import java.io.InputStream;
 import ydb.importer.source.ColumnInfo;
 import ydb.importer.target.*;
@@ -90,7 +90,7 @@ public class LoadDataTask extends ValueConverter implements Callable<LoadDataTas
         final ResultSetMetaData rsmd = rs.getMetaData();
         buildMainIndex(paramType, rsmd);
 
-        final List<Value> batch = new ArrayList<>(maxBatchRows);
+        final List<Value<?>> batch = new ArrayList<>(maxBatchRows);
         while (rs.next()) {
             batch.add( convert(paramType, rs, rsmd) );
             if (batch.size() >= maxBatchRows) {
@@ -190,10 +190,10 @@ public class LoadDataTask extends ValueConverter implements Callable<LoadDataTas
     }
 
     @Override
-    public Value<?> convertBlob(ResultSet rs, ConvInfo ci) throws Exception {
+    public PrimitiveValue convertBlob(ResultSet rs, ConvInfo ci) throws Exception {
         try (InputStream is = openStream(rs, ci)) {
             long id = makeBlobSaver().saveBlob(ydbOp, is, ci.blobPath);
-            return PrimitiveValue.int64(id);
+            return PrimitiveValue.newInt64(id);
         }
     }
 
@@ -222,7 +222,7 @@ public class LoadDataTask extends ValueConverter implements Callable<LoadDataTas
      * @return Base64-encoded hash value as a 'String' YDB data type
      * @throws Exception
      */
-    private Value<?> calcSynthKey(ResultSet rs, ResultSetMetaData rsmd) throws Exception {
+    private PrimitiveValue calcSynthKey(ResultSet rs, ResultSetMetaData rsmd) throws Exception {
         final StringBuilder sb = new StringBuilder();
         for (int i=1; i<=rsmd.getColumnCount(); ++i) {
             if (! ColumnInfo.isBlob(rsmd.getColumnType(i))) {
@@ -234,7 +234,7 @@ public class LoadDataTask extends ValueConverter implements Callable<LoadDataTas
         }
         byte[] v = getSynthDigest().digest(sb.toString().getBytes(StandardCharsets.UTF_8));
         String base64v = getBase64Encoder().encodeToString(v);
-        return PrimitiveValue.string(base64v.getBytes(StandardCharsets.ISO_8859_1));
+        return PrimitiveValue.newBytes(base64v.getBytes(StandardCharsets.ISO_8859_1));
     }
 
     /**
