@@ -1,4 +1,6 @@
 /target/
+nb-configuration.xml
+nbactions.xml
 *.log
 *.tmp
 /scripts/sample-*-real.xml
