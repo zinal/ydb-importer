@@ -1,6 +1,6 @@
 # YDB Data Import Tool
 
-This small utility allows to import tables from various JDBC data sources.
+This small utility allows to import tables into YDB (https://ydb.tech) from various JDBC data sources.
 Currently PostgreSQL and Oracle Database data sources are supported.
 The support for additional data source types is simple and fast to add.
 
